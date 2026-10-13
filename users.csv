@@ -1,0 +1,5 @@
+username,hash,account_type,enabled
+ahmed,AAA111,user,true
+mariam,BBB222,user,true
+admin,AAA111,privileged,true
+nour,CCC333,user,true
