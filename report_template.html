@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<title>AD Password Reuse Report</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: 'Segoe UI', Tahoma, sans-serif;
+    background: #f5f7fa;
+    margin: 0;
+    padding: 32px;
+    color: #1a1a1a;
+  }
+  h1 { color: #1f3a5f; margin-bottom: 4px; }
+  .subtitle { color: #667; margin-bottom: 24px; }
+
+  .summary {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 24px;
+  }
+  .card {
+    background: #fff;
+    padding: 16px 24px;
+    border-radius: 10px;
+    box-shadow: 0 2px 6px rgba(0,0,0,.08);
+    min-width: 160px;
+  }
+  .card .num { font-size: 28px; font-weight: 700; color: #1f3a5f; }
+  .card .lbl { font-size: 13px; color: #667; }
+  .card.critical .num { color: #b00020; }
+  .card.high .num     { color: #e65100; }
+  .card.medium .num   { color: #f9a825; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #fff;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 2px 6px rgba(0,0,0,.08);
+  }
+  th, td {
+    padding: 12px 14px;
+    text-align: left;
+    border-bottom: 1px solid #eef1f5;
+    vertical-align: top;
+  }
+  th { background: #1f3a5f; color: #fff; font-weight: 600; font-size: 14px; }
+  tr:hover { background: #f9fbff; }
+  tr:last-child td { border-bottom: none; }
+
+  .severity {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 6px;
+    font-weight: 700;
+    font-size: 13px;
+    color: #fff;
+  }
+  .severity.HIGH   { background: #e65100; }
+  .severity.MEDIUM { background: #f9a825; }
+  .severity.LOW    { background: #2e7d32; }
+
+  .hash {
+    font-family: 'Consolas', monospace;
+    background: #eef1f5;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 13px;
+  }
+
+  .tag {
+    display: inline-block;
+    background: #e3f2fd;
+    color: #0d47a1;
+    padding: 2px 10px;
+    border-radius: 12px;
+    margin: 2px 2px 2px 0;
+    font-size: 13px;
+  }
+  .tag.privileged { background: #ffebee; color: #b00020; font-weight: 600; }
+
+  .empty {
+    text-align: center;
+    padding: 40px;
+    background: #fff;
+    border-radius: 10px;
+    color: #2e7d32;
+    font-size: 18px;
+  }
+
+  footer {
+    text-align: center;
+    color: #889;
+    margin-top: 32px;
+    font-size: 13px;
+  }
+</style>
+</head>
+<body>
+
+<h1>Active Directory — Password Reuse Report</h1>
+<p class="subtitle">Generated: {{ generated_at }} &nbsp;|&nbsp; Source: {{ source_file }}</p>
+
+<!-- ملخص الأرقام -->
+<div class="summary">
+  <div class="card">
+    <div class="num">{{ total_users }}</div>
+    <div class="lbl">Enabled users scanned</div>
+  </div>
+  <div class="card">
+    <div class="num">{{ total_groups }}</div>
+    <div class="lbl">Reuse groups found</div>
+  </div>
+  <div class="card high">
+    <div class="num">{{ severity_counts.HIGH }}</div>
+    <div class="lbl">High severity</div>
+  </div>
+  <div class="card medium">
+    <div class="num">{{ severity_counts.MEDIUM }}</div>
+    <div class="lbl">Medium severity</div>
+  </div>
+  <div class="card">
+    <div class="num">{{ severity_counts.LOW }}</div>
+    <div class="lbl">Low severity</div>
+  </div>
+</div>
+
+<!-- جدول النتائج -->
+{% if findings %}
+<table>
+  <thead>
+    <tr>
+      <th style="width:40px;">#</th>
+      <th style="width:130px;">Hash (redacted)</th>
+      <th>Accounts</th>
+      <th style="width:110px;">Severity</th>
+      <th>Recommendation</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for f in findings %}
+    <tr>
+      <td>{{ loop.index }}</td>
+      <td><span class="hash">{{ f.hash }}</span></td>
+      <td>
+        {% for u in f.users %}
+          {% if u.account_type == 'privileged' %}
+            <span class="tag privileged">{{ u.username }}</span>
+          {% else %}
+            <span class="tag">{{ u.username }}</span>
+          {% endif %}
+        {% endfor %}
+      </td>
+      <td><span class="severity {{ f.severity }}">{{ f.severity }}</span></td>
+      <td>{{ f.recommendation }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<div class="empty">✅ No password reuse detected.</div>
+{% endif %}
+
+<footer>
+  AD Password Reuse Detection Tool &mdash; LAB USE ONLY.
+  This report contains no plaintext passwords.
+</footer>
+
+</body>
+</html>
